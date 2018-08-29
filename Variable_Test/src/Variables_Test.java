@@ -250,6 +250,48 @@ public class Variables_Test {
 			}
 		
 		
+		///////////////////////////////////////// Test ////////////////////////////////////////
+		//greatest common factor (greatest common divisor) 
+		//(1000,495)=?
+		int m = 1000, n = 495;
+		int gcd_m = m, gcd_n = n;
+		
+		while(m > 0 && n > 0)
+		{
+			if(m >= n)// "m==n" make m = 0;
+			{
+				m -= n;
+				continue;
+			}
+			n -= m;
+		}
+		
+		System.out.printf("m=%d, n=%d%n", m, n);
+		System.out.printf("(%d,%d) = %d%n", gcd_m ,gcd_n, n==0?m:n);		
+		System.out.printf("[%d,%d] = %d%n", gcd_m ,gcd_n, (gcd_m * gcd_n) / (n==0?m:n));
+		
+		
+		
+		//Find all Armstrong number between 1 and 1000;
+		//ex. 1^3 + 5^3 + 3^3
+		double Armstrong = 0;
+		System.out.println("Armstrong Number(1~1000):");
+		for(int arm1 = 1; arm1 < 10; arm1++)
+		{
+			for(int arm2 = arm1; arm2 < 10; arm2++)
+			{
+				for(int arm3 = arm2; arm3 < 10; arm3++)
+				{
+					Armstrong = Math.pow(arm1, 3) + Math.pow(arm2, 3) + Math.pow(arm3, 3);
+					if(Armstrong < 1000)
+					{
+						System.out.printf("%d^3 + %d^3 + %d^3 = ", arm1, arm2, arm3);
+						//System.out.println(Armstrong);
+						System.out.println((int)Armstrong);
+					}
+				}
+			}
+		}		
 		
 		
 		
