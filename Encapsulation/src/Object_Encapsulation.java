@@ -9,11 +9,11 @@ class A_Tower
 
 class Tower_Hanoi
 {
-	A_Tower tower_left;
-	A_Tower tower_center;
-	A_Tower tower_right;
+	private A_Tower tower_left;
+	private A_Tower tower_center;
+	private A_Tower tower_right;
 	
-	boolean tower_is_ok = false; 
+	private boolean tower_is_ok = false; 
 
 	Tower_Hanoi()
 	{
@@ -147,6 +147,284 @@ class Tower_Hanoi
 	}
 }
 
+class Maze_Path
+{
+	int L; //y
+	int R; //x, (y , x)
+	int north;//1:from, 2:to, 3:block
+	int south;
+	int east;
+	int west;
+	Maze_Path left;
+	Maze_Path right;
+	
+	Maze_Path()
+	{
+		
+	}
+	
+	Maze_Path(int l, int r)
+	{
+		this.L = l;
+		this.R = r;
+		this.north = 0;
+		this.south = 0;
+		this.east = 0;
+		this.west = 0;
+		this.left = null;
+		this.right = null;
+	}
+
+	Maze_Path(int l, int r, int n, int s, int e, int w)
+	{
+		this.L = l;
+		this.R = r;
+		this.north = n;
+		this.south = s;
+		this.east = e;
+		this.west = w;
+		this.left = null;
+		this.right = null;
+	}
+	
+	
+	Maze_Path add(int l, int r, int n, int s, int e, int w)
+	{
+		Maze_Path new_path = new Maze_Path(l, r, n, s, e, w);
+		Maze_Path tmp = this.right;
+		if(tmp == null)
+		{
+			this.right = new_path;
+			//new_path.right = null;
+		}
+		else
+		{
+			while(tmp.right != null)
+			{
+				tmp = tmp.right;
+			}
+			tmp.right = new_path;
+		}
+		
+		return new_path;
+	}
+	
+	void display()
+	{
+		Maze_Path tmp;
+		System.out.printf("(%d , %d)\n",  this.L, this.R);
+
+		tmp = this.right;
+		while(tmp != null)
+		{
+			System.out.printf("(%d , %d)\n",  tmp.L, tmp.R);
+			tmp = tmp.right;
+		}
+	}
+}
+
+class Maze_turning_point
+{
+	Maze_turning_point next;
+	Maze_Path p;
+	
+	Maze_turning_point()
+	{
+		this.next = null;
+		this.p = null;
+	}
+		
+	Maze_turning_point(Maze_Path p)
+	{
+		this.next = null;
+		this.p = p;
+	}
+	
+	void push(Maze_Path push_p)
+	{
+		Maze_turning_point new_next = new Maze_turning_point(p);
+		new_next.p = push_p;
+		new_next.next = this.next;
+		this.next = new_next;		
+	}
+	
+	Maze_Path pop()
+	{
+		Maze_Path pop_p;
+		pop_p = this.next.p;
+//		Maze_turning_point tmp = this.next; //lifetime?
+		this.next = this.next.next;
+//		tmp.next = null;
+		
+		System.out.printf("(%d , %d)\n",  pop_p.L, pop_p.R);
+		
+		return pop_p;
+	}
+	
+}
+
+class Maze_runner
+{
+	private int[][] a_maze;
+	private Maze_Path run_path; //start point
+	private Maze_Path mouse_location;
+	private Maze_turning_point turning_point;
+	
+	Maze_runner()
+	{
+		this.turning_point = new Maze_turning_point();		
+	}
+	
+	Maze_runner(int[][] maze, int start_l, int start_r)
+	{
+		this.a_maze = maze;
+		this.run_path = new Maze_Path(start_l, start_r);
+		mouse_location = run_path;
+		this.turning_point = new Maze_turning_point();
+	}
+	
+	int run(int end_l, int end_r)
+	{
+		if(this.a_maze.length == 0 && this.a_maze[0].length == 0)
+		{
+			System.out.println("The Maze is null, the mouse can't escape from the mazw.");
+			return -1;
+		}
+		
+		System.out.printf("The Maze size is %d x %d\n", this.a_maze.length, this.a_maze[0].length);
+		System.out.printf("Run from (%d , %d)\n", mouse_location.L, mouse_location.R);
+		
+
+		
+//		while(mouse_location.L != end_l || mouse_location.R != end_r)
+//		{
+//			if(turn_north())
+//			{
+//				
+//			}
+//		}
+		
+		turn_east();
+		turn_south();
+		turn_south();
+		turn_east();
+		turn_south();
+		turn_south();
+		turn_west();
+		turn_east();//Issue : It should return false, because the original maze donen't be modified.
+		turn_east(); //Issue : It should return false, because the original maze donen't be modified.
+
+
+		return 1;
+	}
+	
+	boolean turn_north()
+	{
+		if(this.mouse_location.L >= 1 && this.mouse_location.L <= this.a_maze.length-1)
+		{
+			if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 0)
+			{
+				this.mouse_location.L--;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 1, 0, 0);
+				return true;
+			}
+//			else if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 2)
+//			{
+//				return false;
+//			}
+			else
+			{
+				return false;
+			}
+		}		
+		return false;
+	}
+	boolean turn_south()
+	{
+		if(this.mouse_location.L >= 0 && this.mouse_location.L < this.a_maze.length-2)
+		{
+			if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 0)
+			{
+				this.mouse_location.L++;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 1, 0, 0, 0);
+				return true;
+			}
+//			else if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 2)
+//			{
+//				return false;
+//			}
+			else
+			{
+				return false;
+			}
+		}		
+		return false;
+	}
+	boolean turn_east()
+	{
+		if(this.mouse_location.R >= 0 && this.mouse_location.R < this.a_maze.length-2)
+		{
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 0)
+			{
+				this.mouse_location.R++;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 0, 1);
+				return true;
+			}
+//			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
+//			{
+//				return false;
+//			}
+			else
+			{
+				return false;
+			}
+		}		
+		return false;
+	}
+	boolean turn_west()
+	{
+		if(this.mouse_location.R >= 1 && this.mouse_location.R <= this.a_maze.length-1)
+		{
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R-1] == 0)
+			{
+				this.mouse_location.R--;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 1, 0);
+				return true;
+			}
+//			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
+//			{
+//				return false;
+//			}
+			else
+			{
+				return false;
+			}
+		}		
+		return false;
+	}
+	
+	void display()
+	{
+		Maze_Path tmp = this.run_path;
+		while(tmp != null)
+		{
+			this.a_maze[tmp.L][tmp.R] = 8;
+			tmp = tmp.right;
+		}
+		
+		
+		for(int i = 0; i < this.a_maze.length; i++)
+		{
+			for(int j = 0; j < this.a_maze[0].length; j++)
+			{
+				System.out.printf("%3d", this.a_maze[i][j]);
+			}
+			System.out.println("");
+		}
+	}
+}
+
+
 
 public class Object_Encapsulation {
 
@@ -165,10 +443,59 @@ public class Object_Encapsulation {
 		Scanner user_input = new Scanner(System.in);
 		int tower_num = user_input.nextInt(); //potential issues :¡@java.util.InputMismatchException
 		
+		if(tower_num < 0)
+		{
+			tower_num = 0;
+			System.out.println("The value must be a positive number, setting the number by zero.");
+		}
 		Tower_Hanoi th = new Tower_Hanoi(tower_num);
 		th.display();
 		System.out.println("");
 		th.play();
+		
+		
+		
+//		//for testing stack
+//		System.out.println("");
+//		System.out.println("Stack test");
+//		Maze_Path p1 = new Maze_Path(1,1);
+//		Maze_Path p2 = new Maze_Path(1,2);
+//		Maze_Path p3 = new Maze_Path(1,3);
+//		
+//		Maze_turning_point turning_point = new Maze_turning_point();
+//
+//		turning_point.push(p1);
+//		turning_point.push(p2);
+//		turning_point.pop();
+//		turning_point.push(p3);
+//		turning_point.pop();
+//		turning_point.pop();
+		
+		//for testing link list
+		System.out.println("");
+		System.out.println("link list test");
+		Maze_Path p1 = new Maze_Path(1,1);
+		
+		p1.add(1,2,0,0,0,0);
+		p1.add(1,3,0,0,0,0);
+		p1.display();
+		p1.add(1,4,0,0,0,0);
+		p1.display();
+		
+		System.out.println("");
+		System.out.println("A mouse escapes from the maze");
+		int[][] maze = { 
+			{2, 2, 2, 2, 2, 2, 2},
+			{0, 0, 0, 0, 0, 0, 2},
+			{2, 0, 2, 0, 2, 0, 2},
+			{2, 0, 0, 2, 0, 2, 2},
+			{2, 2, 0, 2, 0, 2, 2},
+			{2, 0, 0, 0, 0, 0, 2},
+			{2, 2, 2, 2, 2, 0, 2}
+		};
+		Maze_runner mouse = new Maze_runner(maze, 1, 0);
+		mouse.run(6,5);
+		mouse.display();
 
 	}
 
