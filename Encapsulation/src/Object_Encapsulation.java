@@ -147,11 +147,12 @@ class Tower_Hanoi
 	}
 }
 
+//header is null node.
 class Maze_Path
 {
 	int L; //y
 	int R; //x, (y , x)
-	int north;//1:from, 2:to, 3:block
+	int north;//1:to, 2:from, 3:block
 	int south;
 	int east;
 	int west;
@@ -187,6 +188,12 @@ class Maze_Path
 		this.right = null;
 	}
 	
+	void init(Maze_Path header, int l, int r)
+	{
+		Maze_Path new_path = new Maze_Path(l, r, 0, 0, 0, 0);
+		header.right = new_path;
+		new_path.left = header;
+	}
 	
 	Maze_Path add(int l, int r, int n, int s, int e, int w)
 	{
@@ -194,8 +201,7 @@ class Maze_Path
 		Maze_Path tmp = this.right;
 		if(tmp == null)
 		{
-			this.right = new_path;
-			//new_path.right = null;
+			return null;
 		}
 		else
 		{
@@ -204,6 +210,7 @@ class Maze_Path
 				tmp = tmp.right;
 			}
 			tmp.right = new_path;
+			new_path.left = tmp;
 		}
 		
 		return new_path;
@@ -240,17 +247,34 @@ class Maze_turning_point
 		this.p = p;
 	}
 	
-	void push(Maze_Path push_p)
+	boolean push(Maze_Path push_p)
 	{
-		Maze_turning_point new_next = new Maze_turning_point(p);
+		Maze_turning_point new_next;
+		
+		if(push_p == null)
+		{
+			System.out.printf("push_p is null\n");
+			return false;
+		}
+		
+		new_next = new Maze_turning_point(p);
 		new_next.p = push_p;
 		new_next.next = this.next;
 		this.next = new_next;		
+		
+		return true;	
 	}
 	
 	Maze_Path pop()
 	{
 		Maze_Path pop_p;
+		
+		if(this.next == null)
+		{
+			System.out.printf("pop_p is null\n");
+			return null;
+		}
+		
 		pop_p = this.next.p;
 //		Maze_turning_point tmp = this.next; //lifetime?
 		this.next = this.next.next;
@@ -278,7 +302,8 @@ class Maze_runner
 	Maze_runner(int[][] maze, int start_l, int start_r)
 	{
 		this.a_maze = maze;
-		this.run_path = new Maze_Path(start_l, start_r);
+		this.run_path = new Maze_Path();
+		this.run_path.init(this.run_path, start_l, start_r);
 		mouse_location = run_path;
 		this.turning_point = new Maze_turning_point();
 	}
@@ -290,29 +315,46 @@ class Maze_runner
 			System.out.println("The Maze is null, the mouse can't escape from the mazw.");
 			return -1;
 		}
-		
+		if(turning_point == null)
+		{
+			System.out.println("The truning point stack is null.");
+			return -1;
+		}
 		System.out.printf("The Maze size is %d x %d\n", this.a_maze.length, this.a_maze[0].length);
 		System.out.printf("Run from (%d , %d)\n", mouse_location.L, mouse_location.R);
 		
 
 		
-//		while(mouse_location.L != end_l || mouse_location.R != end_r)
-//		{
-//			if(turn_north())
-//			{
-//				
-//			}
-//		}
+		while(mouse_location.L != end_l || mouse_location.R != end_r)
+		{
+			display();
 		
-		turn_east();
-		turn_south();
-		turn_south();
-		turn_east();
-		turn_south();
-		turn_south();
-		turn_west();
-		turn_east();//Issue : It should return false, because the original maze donen't be modified.
-		turn_east(); //Issue : It should return false, because the original maze donen't be modified.
+			if(turn_north() || turn_south() || turn_east() || turn_west())
+			{
+				turning_point.push(this.mouse_location.left);;
+				continue;
+			}
+			
+			this.mouse_location = turning_point.pop();
+			if(mouse_location == null)
+			{
+				System.out.println("The mouse is lost.");
+				break;
+			}
+
+		}
+		
+
+		
+//		turn_east();
+//		turn_south();
+//		turn_south();
+//		turn_east();
+//		turn_south();
+//		turn_south();
+//		turn_west();
+//		turn_east();//Issue : It should return false, because the original maze donen't be modified.
+//		turn_east(); //Issue : It should return false, because the original maze donen't be modified.
 
 
 		return 1;
@@ -322,10 +364,11 @@ class Maze_runner
 	{
 		if(this.mouse_location.L >= 1 && this.mouse_location.L <= this.a_maze.length-1)
 		{
-			if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 0)
+			if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 0 && this.mouse_location.north < 2)
 			{
 				this.mouse_location.L--;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 1, 0, 0);
+				this.mouse_location.north = 1;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 2, 0, 0);
 				return true;
 			}
 //			else if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 2)
@@ -334,19 +377,23 @@ class Maze_runner
 //			}
 			else
 			{
+				mouse_location.north = 3;
 				return false;
 			}
 		}		
+		mouse_location.north = 3;
 		return false;
 	}
+	
 	boolean turn_south()
 	{
 		if(this.mouse_location.L >= 0 && this.mouse_location.L < this.a_maze.length-2)
 		{
-			if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 0)
+			if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 0 && this.mouse_location.south < 2)
 			{
 				this.mouse_location.L++;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 1, 0, 0, 0);
+				this.mouse_location.south = 1;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 2, 0, 0, 0);
 				return true;
 			}
 //			else if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 2)
@@ -355,19 +402,23 @@ class Maze_runner
 //			}
 			else
 			{
+				this.mouse_location.south = 3;
 				return false;
 			}
 		}		
+		this.mouse_location.south = 3;
 		return false;
 	}
+	
 	boolean turn_east()
 	{
 		if(this.mouse_location.R >= 0 && this.mouse_location.R < this.a_maze.length-2)
 		{
-			if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 0)
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 0 && this.mouse_location.east < 2)
 			{
 				this.mouse_location.R++;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 0, 1);
+				this.mouse_location.east = 1;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 0, 2);
 				return true;
 			}
 //			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
@@ -376,19 +427,23 @@ class Maze_runner
 //			}
 			else
 			{
+				this.mouse_location.east = 3;
 				return false;
 			}
 		}		
+		this.mouse_location.east = 3;
 		return false;
 	}
+	
 	boolean turn_west()
 	{
 		if(this.mouse_location.R >= 1 && this.mouse_location.R <= this.a_maze.length-1)
 		{
-			if(this.a_maze[this.mouse_location.L][this.mouse_location.R-1] == 0)
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R-1] == 0 && this.mouse_location.west < 2)
 			{
 				this.mouse_location.R--;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 1, 0);
+				this.mouse_location.west = 1;
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 2, 0);
 				return true;
 			}
 //			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
@@ -397,30 +452,48 @@ class Maze_runner
 //			}
 			else
 			{
+				this.mouse_location.west = 3;
 				return false;
 			}
 		}		
+		this.mouse_location.west = 3;
 		return false;
 	}
 	
 	void display()
 	{
-		Maze_Path tmp = this.run_path;
-		while(tmp != null)
-		{
-			this.a_maze[tmp.L][tmp.R] = 8;
-			tmp = tmp.right;
-		}
-		
+		Maze_Path tmp = this.run_path.right;
+		int[][] tmp_array = new int[this.a_maze.length][this.a_maze[0].length];
 		
 		for(int i = 0; i < this.a_maze.length; i++)
 		{
 			for(int j = 0; j < this.a_maze[0].length; j++)
 			{
-				System.out.printf("%3d", this.a_maze[i][j]);
+				tmp_array[i][j] = this.a_maze[i][j];
+			}
+		}
+		
+		while(tmp != null)
+		{
+			tmp_array[tmp.L][tmp.R] = 8;
+			
+			if(tmp.right == null)
+			{
+				tmp_array[tmp.L][tmp.R] = 7;
+			}
+			tmp = tmp.right;
+		}
+		
+		
+		for(int i = 0; i < tmp_array.length; i++)
+		{
+			for(int j = 0; j < tmp_array[0].length; j++)
+			{
+				System.out.printf("%3d", tmp_array[i][j]);
 			}
 			System.out.println("");
 		}
+		//System.out.println("");
 	}
 }
 
@@ -472,15 +545,15 @@ public class Object_Encapsulation {
 //		turning_point.pop();
 		
 		//for testing link list
-		System.out.println("");
-		System.out.println("link list test");
-		Maze_Path p1 = new Maze_Path(1,1);
-		
-		p1.add(1,2,0,0,0,0);
-		p1.add(1,3,0,0,0,0);
-		p1.display();
-		p1.add(1,4,0,0,0,0);
-		p1.display();
+//		System.out.println("");
+//		System.out.println("link list test");
+//		Maze_Path p1 = new Maze_Path(1,1);
+//		
+//		p1.add(1,2,0,0,0,0);
+//		p1.add(1,3,0,0,0,0);
+//		p1.display();
+//		p1.add(1,4,0,0,0,0);
+//		p1.display();
 		
 		System.out.println("");
 		System.out.println("A mouse escapes from the maze");
