@@ -51,6 +51,21 @@ class Tower_Hanoi
 		System.out.println("");
 	}	
 
+	//**********************************//
+	//move(	n,		src,	tmp,	dst)
+	//
+	//move(	n-1,	s,		d,		t)
+	//move(	1,		s,		t,		d)
+	//move(	n-1,	t,		s,		d)
+	//	
+	/////////////////////////////////////
+	//
+	//move(	n-1,	s,		d,		t)
+	//
+	//move(	n-2,	s,		t,		d)
+	//move(	1,		s,		d,		t)
+	//move(	n-2,	d,		s,		t)
+	//**********************************//
 	void move(int num, A_Tower src, A_Tower tmp, A_Tower dst)
 	{
 		if(num == 0)
@@ -152,12 +167,13 @@ class Maze_Path
 {
 	int L; //y
 	int R; //x, (y , x)
-	int north;//1:to, 2:from, 3:block
-	int south;
-	int east;
-	int west;
+
 	Maze_Path left;
 	Maze_Path right;
+	
+	final int is_traced = 8;
+	final int is_path = 6;
+	final int is_mouse = 9;
 	
 	Maze_Path()
 	{
@@ -168,36 +184,21 @@ class Maze_Path
 	{
 		this.L = l;
 		this.R = r;
-		this.north = 0;
-		this.south = 0;
-		this.east = 0;
-		this.west = 0;
 		this.left = null;
 		this.right = null;
 	}
 
-	Maze_Path(int l, int r, int n, int s, int e, int w)
-	{
-		this.L = l;
-		this.R = r;
-		this.north = n;
-		this.south = s;
-		this.east = e;
-		this.west = w;
-		this.left = null;
-		this.right = null;
-	}
 	
 	void init(Maze_Path header, int l, int r)
 	{
-		Maze_Path new_path = new Maze_Path(l, r, 0, 0, 0, 0);
+		Maze_Path new_path = new Maze_Path(l, r);
 		header.right = new_path;
 		new_path.left = header;
 	}
 	
-	Maze_Path add(int l, int r, int n, int s, int e, int w)
+	Maze_Path add(int l, int r)
 	{
-		Maze_Path new_path = new Maze_Path(l, r, n, s, e, w);
+		Maze_Path new_path = new Maze_Path(l, r);
 		Maze_Path tmp = this.right;
 		if(tmp == null)
 		{
@@ -228,6 +229,20 @@ class Maze_Path
 			tmp = tmp.right;
 		}
 	}
+	
+	void display_inverse()
+	{
+		Maze_Path tmp;
+		System.out.printf("(%d , %d)",  this.L, this.R);
+
+		tmp = this.left;
+		while(tmp != null)
+		{
+			System.out.printf("(%d , %d)",  tmp.L, tmp.R);
+			tmp = tmp.left;
+		}
+		System.out.println();
+	}
 }
 
 class Maze_turning_point
@@ -257,10 +272,14 @@ class Maze_turning_point
 			return false;
 		}
 		
+//		System.out.printf("Ready push (%d , %d)\n",  push_p.L, push_p.R);
+		
 		new_next = new Maze_turning_point(p);
 		new_next.p = push_p;
 		new_next.next = this.next;
 		this.next = new_next;		
+		
+		System.out.printf("push (%d , %d)\n",  push_p.L, push_p.R);
 		
 		return true;	
 	}
@@ -279,8 +298,9 @@ class Maze_turning_point
 //		Maze_turning_point tmp = this.next; //lifetime?
 		this.next = this.next.next;
 //		tmp.next = null;
+		pop_p.right = null;
 		
-		System.out.printf("(%d , %d)\n",  pop_p.L, pop_p.R);
+		System.out.printf("pop (%d , %d)\n",  pop_p.L, pop_p.R);
 		
 		return pop_p;
 	}
@@ -304,7 +324,7 @@ class Maze_runner
 		this.a_maze = maze;
 		this.run_path = new Maze_Path();
 		this.run_path.init(this.run_path, start_l, start_r);
-		mouse_location = run_path;
+		this.mouse_location = this.run_path.right;
 		this.turning_point = new Maze_turning_point();
 	}
 	
@@ -321,27 +341,43 @@ class Maze_runner
 			return -1;
 		}
 		System.out.printf("The Maze size is %d x %d\n", this.a_maze.length, this.a_maze[0].length);
-		System.out.printf("Run from (%d , %d)\n", mouse_location.L, mouse_location.R);
+		System.out.printf("Run from (%d , %d)\n", this.mouse_location.L, this.mouse_location.R);
 		
 
+//		int i_tmp = 0;
 		
-		while(mouse_location.L != end_l || mouse_location.R != end_r)
+		while(this.mouse_location.L != end_l || this.mouse_location.R != end_r)
 		{
 			display();
 		
+//			if(i_tmp++ > 20)
+//				break;
+			
 			if(turn_north() || turn_south() || turn_east() || turn_west())
 			{
-				turning_point.push(this.mouse_location.left);;
+				this.a_maze[this.mouse_location.L][this.mouse_location.R] = this.mouse_location.is_traced;
+//				System.out.printf(" ready push mouse_location.left (%d , %d)\n", this.mouse_location.left.L, this.mouse_location.left.R);
+				turning_point.push(this.mouse_location.left);
+//				System.out.printf("mouse_location (%d , %d), n=%d, s=%d, e=%d, w=%d\n",  mouse_location.L, mouse_location.R, mouse_location.north, mouse_location.south, mouse_location.east, mouse_location.west);
+//				System.out.printf("mouse_location.left (%d , %d)\n", this.mouse_location.left.L, this.mouse_location.left.R);
+//				this.mouse_location.display_inverse();
 				continue;
 			}
 			
 			this.mouse_location = turning_point.pop();
-			if(mouse_location == null)
+//			System.out.printf("mouse_location (%d , %d)\n", this.mouse_location.L, this.mouse_location.R);
+//			System.out.printf("mouse_location.left (%d , %d)\n", this.mouse_location.left.L, this.mouse_location.left.R);
+			if(this.mouse_location == null)
 			{
 				System.out.println("The mouse is lost.");
 				break;
 			}
 
+		}
+		
+		if(this.mouse_location.L == end_l && this.mouse_location.R == end_r)
+		{
+			System.out.println("The mouse has escaped from the maze.");
 		}
 		
 
@@ -364,74 +400,51 @@ class Maze_runner
 	{
 		if(this.mouse_location.L >= 1 && this.mouse_location.L <= this.a_maze.length-1)
 		{
-			if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 0 && this.mouse_location.north < 2)
+			if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 0)
 			{
-				this.mouse_location.L--;
-				this.mouse_location.north = 1;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 2, 0, 0);
+				this.mouse_location = run_path.add(this.mouse_location.L - 1, this.mouse_location.R);
 				return true;
 			}
-//			else if(this.a_maze[this.mouse_location.L-1][this.mouse_location.R] == 2)
-//			{
-//				return false;
-//			}
 			else
 			{
-				mouse_location.north = 3;
 				return false;
 			}
 		}		
-		mouse_location.north = 3;
 		return false;
 	}
 	
 	boolean turn_south()
 	{
-		if(this.mouse_location.L >= 0 && this.mouse_location.L < this.a_maze.length-2)
+		if(this.mouse_location.L >= 0 && this.mouse_location.L <= this.a_maze[0].length-2)
 		{
-			if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 0 && this.mouse_location.south < 2)
+			if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 0)
 			{
-				this.mouse_location.L++;
-				this.mouse_location.south = 1;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 2, 0, 0, 0);
+				//this.mouse_location.south = this.mouse_location.go_to;
+				this.mouse_location = run_path.add(this.mouse_location.L + 1, this.mouse_location.R);
 				return true;
 			}
-//			else if(this.a_maze[this.mouse_location.L+1][this.mouse_location.R] == 2)
-//			{
-//				return false;
-//			}
 			else
 			{
-				this.mouse_location.south = 3;
 				return false;
 			}
 		}		
-		this.mouse_location.south = 3;
 		return false;
 	}
 	
 	boolean turn_east()
 	{
-		if(this.mouse_location.R >= 0 && this.mouse_location.R < this.a_maze.length-2)
+		if(this.mouse_location.R >= 0 && this.mouse_location.R <= this.a_maze.length-2)
 		{
-			if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 0 && this.mouse_location.east < 2)
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 0)
 			{
-				this.mouse_location.R++;
-				this.mouse_location.east = 1;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 0, 2);
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R + 1);
 				return true;
 			}
-//			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
-//			{
-//				return false;
-//			}
 			else
 			{
-				this.mouse_location.east = 3;
 				return false;
 			}
 		}		
-		this.mouse_location.east = 3;
 		return false;
 	}
 	
@@ -439,24 +452,16 @@ class Maze_runner
 	{
 		if(this.mouse_location.R >= 1 && this.mouse_location.R <= this.a_maze.length-1)
 		{
-			if(this.a_maze[this.mouse_location.L][this.mouse_location.R-1] == 0 && this.mouse_location.west < 2)
+			if(this.a_maze[this.mouse_location.L][this.mouse_location.R-1] == 0)
 			{
-				this.mouse_location.R--;
-				this.mouse_location.west = 1;
-				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R, 0, 0, 2, 0);
+				this.mouse_location = run_path.add(this.mouse_location.L, this.mouse_location.R - 1);
 				return true;
 			}
-//			else if(this.a_maze[this.mouse_location.L][this.mouse_location.R+1] == 2)
-//			{
-//				return false;
-//			}
 			else
 			{
-				this.mouse_location.west = 3;
 				return false;
 			}
 		}		
-		this.mouse_location.west = 3;
 		return false;
 	}
 	
@@ -475,11 +480,11 @@ class Maze_runner
 		
 		while(tmp != null)
 		{
-			tmp_array[tmp.L][tmp.R] = 8;
+			tmp_array[tmp.L][tmp.R] = tmp.is_path;
 			
 			if(tmp.right == null)
 			{
-				tmp_array[tmp.L][tmp.R] = 7;
+				tmp_array[tmp.L][tmp.R] = tmp.is_mouse;
 			}
 			tmp = tmp.right;
 		}
@@ -558,13 +563,20 @@ public class Object_Encapsulation {
 		System.out.println("");
 		System.out.println("A mouse escapes from the maze");
 		int[][] maze = { 
+//			{2, 2, 2, 2, 2, 2, 2},
+//			{0, 0, 0, 0, 0, 0, 2},
+//			{2, 0, 2, 0, 2, 0, 2},
+//			{2, 0, 0, 2, 0, 2, 2},
+//			{2, 2, 0, 2, 0, 2, 2},
+//			{2, 0, 0, 0, 0, 0, 2},
+//			{2, 2, 2, 2, 2, 0, 2}
 			{2, 2, 2, 2, 2, 2, 2},
 			{0, 0, 0, 0, 0, 0, 2},
-			{2, 0, 2, 0, 2, 0, 2},
-			{2, 0, 0, 2, 0, 2, 2},
-			{2, 2, 0, 2, 0, 2, 2},
-			{2, 0, 0, 0, 0, 0, 2},
-			{2, 2, 2, 2, 2, 0, 2}
+			{2, 0, 2, 0, 2, 0, 0},
+			{2, 0, 0, 2, 0, 2, 0},
+			{2, 2, 0, 0, 0, 2, 0},
+			{2, 0, 0, 0, 0, 2, 0},
+			{2, 2, 2, 2, 2, 0, 0}
 		};
 		Maze_runner mouse = new Maze_runner(maze, 1, 0);
 		mouse.run(6,5);
