@@ -27,6 +27,49 @@ class ChessBoard{
 	
 }
 
+// root <-> node <-> node
+class Chess_Path{
+
+	int UL; //up left
+	int UR; //up right
+	int RU; //right up
+	int RD; //right down
+	int DR; //down right
+	int DU; //down up
+	int LD; //left down
+	int LU; //left up
+	
+	Chess_Path()
+	{
+		//generate a root node;
+	}
+	
+	int add_path() //add, but not insert
+	{
+	
+		return 0;
+	}
+	
+	int delete() //delete the last node
+	{
+		
+		return 0;
+	}
+	
+
+	void show()
+	{
+		
+	}
+	
+	
+	void test_night_path()
+	{
+		
+	}
+	
+}
+
 
 public class The_Knight {
 
