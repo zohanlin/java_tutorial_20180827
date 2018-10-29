@@ -27,7 +27,7 @@ class ChessBoard{
 	
 }
 
-// root <-> node <-> node
+
 class Chess_Path{
 
 	int UL; //up left
@@ -41,7 +41,15 @@ class Chess_Path{
 	
 	Chess_Path()
 	{
-		//generate a root node;
+		
+	}
+	
+
+	
+	Chess_Path(int test)
+	{
+		//for test;
+		this.UL = test;
 	}
 	
 	int add_path() //add, but not insert
@@ -70,11 +78,69 @@ class Chess_Path{
 	
 }
 
+//root <-> node <-> node
+
+class Path_Node
+{
+	
+	Chess_Path path;
+	Path_Node left;
+	Path_Node right; //next node
+	
+	Path_Node()
+	{
+		
+	}
+	
+	Path_Node(Chess_Path p)
+	{
+		this.path = p;
+	}
+	
+	void add(Path_Node root, Chess_Path p)
+	{
+		Path_Node new_node = new Path_Node(p);
+		Path_Node last_node = root;
+		
+		while(last_node.right != null)
+		{
+			last_node = last_node.right;
+		}
+		last_node.right = new_node;
+		new_node.left = last_node; 
+	}
+	
+	void show()
+	{
+		Path_Node last_node = this.right;
+		int i = 0;
+		while(last_node != null)
+		{
+			System.out.printf("%d : %d\n", i++,  last_node.path.UL);
+			last_node = last_node.right;
+		}
+	}
+	
+	
+}
+
 
 public class The_Knight {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		
+		
+		//test node operation
+		System.out.println("Test node operation");
+		Path_Node root = new Path_Node();
+		for(int i = 0; i < 10; i++)
+		{
+			Chess_Path cp = new Chess_Path(100-i);
+			root.add(root, cp);
+		}
+		root.show();
+		
 		
 		System.out.println("Chess");
 		
