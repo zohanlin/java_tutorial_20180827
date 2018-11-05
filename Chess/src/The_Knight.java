@@ -1,6 +1,9 @@
 class ChessBoard{
 	
 	int[][] a_chessboard;
+	Path_Node root;
+	Path_Node last_node;
+	int cnt = 0;
 	
 	ChessBoard()
 	{
@@ -11,6 +14,73 @@ class ChessBoard{
 	{
 		this.a_chessboard = new int[board_size][board_size];
 		System.out.printf("Generate a %d X %d Chessboard.\n", board_size, board_size);
+	}
+	
+	void Knight_run(int start_x, int start_y)
+	{
+		this.root = new Path_Node();		
+		Chess_Path cp = new Chess_Path(start_x, start_y);
+		root.add(root, cp);
+		this.last_node = root.get_last_node();
+		this.cnt++;
+		this.a_chessboard[this.last_node.path.y][this.last_node.path.x] = this.cnt;
+		
+		Knight_up_left();
+		Knight_up_left();
+		Knight_up_left();
+	}
+	
+	int Knight_up_left()
+	{
+		if(this.last_node.path.y - 2 >= 0 && this.last_node.path.y <= this.a_chessboard.length &&
+		   this.last_node.path.x - 1 >= 0 && this.last_node.path.x <= this.a_chessboard[0].length	)
+		{
+			Chess_Path cp = new Chess_Path(this.last_node.path.x - 1, this.last_node.path.y - 2);
+			cp.UL = 1;
+			root.add(root, cp);
+			this.last_node = root.get_last_node();
+			this.cnt++;
+			this.a_chessboard[this.last_node.path.y][this.last_node.path.x] = this.cnt;
+
+			return 1;
+		}
+		
+		return 0;
+	}
+	
+	void Knight_up_right()
+	{
+		
+	}
+	
+	void Knight_right_up()
+	{
+		
+	}
+	
+	void Knight_right_down()
+	{
+		
+	}
+	
+	void Knight_down_right()
+	{
+		
+	}
+	
+	void Knight_down_left()
+	{
+		
+	}
+	
+	void Knight_left_down()
+	{
+		
+	}
+	
+	void Knight_left_up()
+	{
+		
 	}
 	
 	void show()
@@ -38,18 +108,24 @@ class Chess_Path{
 	int DU; //down up
 	int LD; //left down
 	int LU; //left up
+	int x, y;
 	
 	Chess_Path()
 	{
 		
 	}
 	
-
-	
 	Chess_Path(int test)
 	{
 		//for test;
 		this.UL = test;
+	}
+	
+	Chess_Path(int x, int y)
+	{
+		//for test;
+		this.x = x;
+		this.y = y;
 	}
 	
 	int add_path() //add, but not insert
@@ -110,6 +186,28 @@ class Path_Node
 		new_node.left = last_node; 
 	}
 	
+	Path_Node get_last_node()
+	{
+		Path_Node tmp;
+		
+		if(this.right==null && this.left==null)
+		{
+			return null;
+		}
+		
+		tmp = this.right;
+		if(tmp != null)
+		{
+			while(tmp.right!=null)
+			{
+				tmp = tmp.right;
+			}
+		}
+
+		
+		return tmp;
+	}
+	
 	void show()
 	{
 		Path_Node last_node = this.right;
@@ -140,11 +238,23 @@ public class The_Knight {
 			root.add(root, cp);
 		}
 		root.show();
-		
+		Path_Node lastN;
+		lastN = root.get_last_node();
+		if(lastN!=null)
+		{
+			System.out.printf("lastN.path.UL = %d\n", lastN.path.UL);
+		}
+		else
+		{
+			System.out.printf("lastN.path.UL is null\n");
+		}
 		
 		System.out.println("Chess");
 		
 		ChessBoard K_chess = new ChessBoard(8);
+		K_chess.show();
+		System.out.println("");
+		K_chess.Knight_run(5, 5);
 		K_chess.show();
 
 	}
